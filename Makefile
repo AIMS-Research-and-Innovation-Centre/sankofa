@@ -9,7 +9,7 @@ bootstrap:
 	@echo "✅ ready. next: make seed"
 
 dev:
-	uvicorn sankofa.api.app:app --reload --port 8000
+	uvicorn sankofa.api.app:app --reload --port 8001
 
 seed:
 	python scripts/seed_demo.py
