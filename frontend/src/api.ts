@@ -53,7 +53,7 @@ export async function archive(query: string): Promise<Thesis[]> {
     result.push(...await Promise.all(batch.map(async row => {
       const id = 'thesis_id' in row ? row.thesis_id : row.id;
       const record = await thesis(id);
-      return 'title' in row ? { ...record, ...row, concepts: record.concepts } : record;
+      return 'title' in row ? { ...record, ...row, author: row.author || record.author, concepts: record.concepts } : record;
     })));
   }
   return result;

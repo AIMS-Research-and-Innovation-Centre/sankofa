@@ -8,7 +8,7 @@ async function setup(page: Page) {
   await page.route('**/api/**', async route => {
     const request = route.request(); const path = new URL(request.url()).pathname.replace('/api', '');
     let body: unknown;
-    if (path === '/theses/') body = records.map(({ id, title, campus, year }) => ({ id, title, campus, year }));
+    if (path === '/theses/') body = records.map(({ id, title, campus, year }) => ({ id, title, campus, year, author: null }));
     else if (path === '/theses/search') { expect(request.method()).toBe('POST'); expect(request.postDataJSON().query).toBe('malaria'); body = [{ thesis_id: records[0].id, score: 0.8 }]; }
     else if (path.endsWith('/neighbors')) body = [{ id: 'ada', label: 'ada', labels: ['Student'] }, { id: records[1].id, label: records[1].title, labels: ['Thesis'] }];
     else if (path.startsWith('/theses/')) { const t = records.find(t => path.endsWith(t.id)); if (!t) return route.fulfill({ status: 404, json: { detail: 'Thesis not found' } }); const { concepts, ...record } = t; body = { thesis: record, concepts }; }
