@@ -1,4 +1,4 @@
-.PHONY: bootstrap dev seed verify smoke clean
+.PHONY: bootstrap dev seed verify smoke clean ui ui-build ui-test
 
 bootstrap:
 	cp -n .env.example .env || true
@@ -23,3 +23,12 @@ smoke:
 clean:
 	docker compose down -v
 	rm -f data/events.ndjson data/audit.ndjson
+
+ui:
+	cd frontend && npm run dev
+
+ui-build:
+	cd frontend && npm run build
+
+ui-test:
+	cd frontend && npm test
