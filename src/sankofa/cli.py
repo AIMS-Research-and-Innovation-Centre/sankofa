@@ -9,9 +9,9 @@ app = typer.Typer(help="Sankofa — the archive that remembers you back.")
 @app.command()
 def ingest(
     pdf: Path,
-    author: str = "",
-    campus: str = "",
-    year: int = 0,
+    author: str = typer.Option("", "--author"),
+    campus: str = typer.Option("", "--campus"),
+    year: int = typer.Option(0, "--year"),
 ) -> None:
     """Ingest a thesis PDF into the archive."""
     from .ingestion.pipeline import ingest as do_ingest
@@ -20,7 +20,10 @@ def ingest(
 
 
 @app.command()
-def whisper(id: str, q: str) -> None:
+def whisper(
+    id: str = typer.Option(..., "--id"),
+    q: str = typer.Option(..., "--q"),
+) -> None:
     """Ask a thesis a question."""
     from .agents.interlocutor.agent import Interlocutor
     resp = Interlocutor(id).ask(q)
@@ -28,11 +31,18 @@ def whisper(id: str, q: str) -> None:
 
 
 @app.command()
-def oracle(topic: str, k: int = 5) -> None:
+def oracle(
+    topic: str = typer.Option(..., "--topic"),
+    k: int = typer.Option(5, "--k"),
+) -> None:
     """Ask the Oracle for an unwritten thesis."""
     from .agents.oracle.agent import Oracle
     typer.echo(f"\n🔮  The Oracle contemplates '{topic}'...\n")
-    for i, idea in enumerate(Oracle().propose(topic, top_k=k), 1):
+    ideas = Oracle().propose(topic, top_k=k)
+    if not ideas:
+        typer.echo("(The archive is too sparse for the Oracle. Ingest more theses.)")
+        return
+    for i, idea in enumerate(ideas, 1):
         typer.echo(f"{i}. {idea['title']}")
         typer.echo(f"   novelty={idea['novelty']}  feasibility={idea['feasible']}")
         typer.echo(f"   → {idea['rationale']}\n")
