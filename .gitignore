@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+data/events.ndjson
+data/audit.ndjson
+data/dreams/*.json
+data/snapshots/*.json
+!data/dreams/.gitkeep
+!data/snapshots/.gitkeep
+node_modules/
+frontend/dist/
