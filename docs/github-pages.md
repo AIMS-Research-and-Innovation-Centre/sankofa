@@ -2,7 +2,11 @@
 
 The UI is configured for https://naphymoro.github.io/sankofa/.
 
-In repository Settings → Pages → Build and deployment, select **GitHub Actions** as the source. The connected GitHub tools do not expose this administration setting.
+The repository root contains a compiled `index.html`, `assets/`, and `.nojekyll` for the existing **Deploy from a branch → main → / (root)** Pages configuration. This prevents GitHub Pages from rendering the README as the homepage. Do not copy `frontend/index.html` alone: it references TypeScript source, which a static server cannot compile.
+
+To update this branch-based publication, run `npm ci` and `npm run pages:publish` in `frontend`, then commit the generated root `index.html` and `assets/` along with the source changes. `pages:publish` performs a production build with the `/sankofa/` base and hash routing before copying the output. Keep `.nojekyll` in the repository root. GitHub's branch publication runs after the push.
+
+For automatic frontend builds, change Settings → Pages → Build and deployment to **GitHub Actions**. The connected GitHub tools do not expose this administration setting. The branch-based publication above works without that change.
 
 The `Deploy UI to GitHub Pages` workflow builds and publishes `frontend/dist` on changes to the frontend on `main`. It can also be run manually from Actions. Assets use `/sankofa/`, and hash routes such as `/sankofa/#/about` support direct links, reloads, and browser history without server rewrites. Regular local development keeps its original routes.
 
