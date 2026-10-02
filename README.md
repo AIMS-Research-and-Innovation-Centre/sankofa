@@ -69,6 +69,8 @@ Shortcuts do not interrupt text entry. Filter, query, and sort state are stored 
 
 ## Production hosting
 
+For GitHub Pages, see [deployment instructions](docs/github-pages.md). The Pages workflow publishes the UI with repository-relative assets and hash navigation. A separate backend is required for archive data and live features.
+
 `npm run build` creates `frontend/dist`. Serve its files with SPA fallback to `index.html` for web routes. Proxy `/api/*` to the backend, removing `/api`, and proxy `/ws/constellation` with WebSocket upgrade support. `npm run preview` serves the bundle for inspection, not production.
 
 For a backend on another origin, copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE` and `VITE_GRAPH_WS` before building. Use HTTPS/WSS on secure deployments. Values in frontend environment variables are public and must not contain credentials.

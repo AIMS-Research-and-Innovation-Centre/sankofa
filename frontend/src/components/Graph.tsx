@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { errorMessage, graphUrl, type GraphData } from '../api';
+import { archiveConnected, errorMessage, graphUrl, type GraphData } from '../api';
 import { Link, Navigation } from '../router';
 import SearchForm from './SearchForm';
 
@@ -13,6 +13,7 @@ export default function Graph({ search }: { search: string }) {
   const focus = new URLSearchParams(search).get('focus');
   useEffect(() => { const clear = (event: KeyboardEvent) => { if (event.key === 'Escape') { setFilter(''); setQuery(''); } }; window.addEventListener('keydown', clear); return () => window.removeEventListener('keydown', clear); }, []);
   useEffect(() => {
+    if (!archiveConnected) { setStatus('The archive service is not connected.'); return; }
     let disposed = false; let socket: WebSocket; let retry: ReturnType<typeof setTimeout>;
     let attempt = 0;
     function connect() {

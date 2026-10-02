@@ -10,7 +10,9 @@ export interface GraphNode { id: string; title: string; year?: number; campus?: 
 export interface GraphData { nodes: GraphNode[]; edges: { source: string; target: string; via: string }[] }
 
 const base = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
+export const archiveConnected = import.meta.env.VITE_PAGES !== 'true' || !!import.meta.env.VITE_API_BASE;
 export async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  if (!archiveConnected) throw new Error('The archive service is not connected to this website yet.');
   const response = await fetch(`${base}${path}`, {
     method: body === undefined ? 'GET' : 'POST',
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
