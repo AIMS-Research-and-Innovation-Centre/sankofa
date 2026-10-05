@@ -2,15 +2,18 @@
 
 A thesis archive for the African Institute for Mathematical Sciences. Find, read, cite, and question theses, and follow connections across campuses and cohorts. The name comes from the Akan concept “Go back and fetch it.”
 
-## v0.2.0-alpha web interface
+## Web interface
 
-- Search-first archive with abstracts, concept links, campus/year/concept filters, and sorting.
-- Thesis detail pages with metadata, related records, inline questions, and BibTeX/RIS downloads.
-- Separate Oracle, Dreams, Graph, and About pages.
-- Light mode by default, persistent dark mode, responsive layouts, and keyboard navigation.
-- A live Three.js graph, loaded only at `/graph`, with bounded zoom and no automatic rotation.
+The interface follows the AIMS Scholarly Repository roadmap: one archive for the whole network, a community per Centre, and browse labels taken from DSpace@MIT.
 
-The Python backend, CLI, interactive terminal, and existing API remain unchanged.
+- **Discover:** search across all Centres, filter by Centre, year and concept, and add results to the notebook.
+- **Centres:** all six Centres in the controlled list (AIMS South Africa, Senegal, Ghana, Cameroon, Rwanda and the AIMS Research and Innovation Centre), each with its own page. Programme communities C2 to C5 are listed alongside them. Free-text campus values such as `ghana` or `Cape Town` are mapped onto the list (`src/sankofa/centres.py`, mirrored in `frontend/src/centres.ts`).
+- **Browse:** by Centre, issue date, author, title and subject, scoped to the whole archive or to one Centre.
+- **Knowledge graph:** theses, concepts, authors and Centres as typed nodes, each type with its own shape and colour. Search, filter by type or Centre, focus on a node's neighbourhood, and inspect its connections. A list view covers keyboard and screen-reader use.
+- **Notebook:** choose theses as sources and ask questions. Answers draw only on the selected sources and cite them as [n]. When no language model is available, answers quote the relevant abstract sentences instead. Studio builds a source guide, shared concepts and an APA bibliography, and exports to Markdown.
+- **Thesis pages:** metadata, an APA 7 suggested citation, BibTeX, RIS and CSV export, inline questions, and links to the graph and notebook.
+- **Agents:** an MCP server, so Hermes Agent and other MCP clients can use the archive (see below).
+- English and French interface, light and dark themes (following the system setting by default), responsive layouts and keyboard navigation.
 
 ## Run locally
 
@@ -48,11 +51,14 @@ The browser suite verifies frontend behavior and request/response contracts usin
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Archive and hybrid search |
+| `/` | Discover: search and filter the archive |
+| `/centres`, `/centres/:slug` | The AIMS Centres and each Centre's community page |
+| `/browse` | Browse by Centre, issue date, author, title or subject |
+| `/graph` | Knowledge graph (`?focus=<thesis id>`, `?centre=<slug>`, `?concept=<name>`) |
+| `/notebook` | Ask cited questions of chosen theses |
+| `/connect` | Connect an agent over MCP |
 | `/thesis/:id` | Read, ask questions, and cite |
-| `/oracle` | Explore proposed research directions |
-| `/dreams` | Read or trigger graph passages |
-| `/graph` | Live graph and accessible thesis links |
+| `/oracle`, `/dreams` | Exploratory research directions and graph passages |
 | `/about` | Context, ethics, and keyboard guide |
 
 | Key | Action |
@@ -60,12 +66,31 @@ The browser suite verifies frontend behavior and request/response contracts usin
 | `/` | Focus search; open the archive if this view has no search |
 | `j` / `k` | Next / previous archive result |
 | `Enter` | Open the focused thesis |
-| `g h` | Go to the archive |
-| `g g` | Go to the graph |
-| `Esc` | Clear the current search |
+| `g h` / `g c` / `g b` | Go to Discover / Centres / Browse |
+| `g g` / `g n` | Go to the knowledge graph / notebook |
+| `Esc` | Clear the current search or graph selection |
 | `Tab` | Navigate all controls and links |
 
 Shortcuts do not interrupt text entry. Filter, query, and sort state are stored in the URL. Browser back/forward and direct thesis links work.
+
+## Connect an agent (Hermes Agent and other MCP clients)
+
+Sankofa serves the archive over the Model Context Protocol. Every tool is read-only: `search_theses`, `get_thesis`, `related_records`, `list_centres`, `ask_theses` and `propose_directions`.
+
+```bash
+pip install -e '.[agents]'   # adds the MCP SDK
+sankofa mcp                  # stdio, for a local agent
+```
+
+With the extra installed, the API also serves streamable HTTP at `/mcp/`. For Hermes Agent, add this to `~/.hermes/config.yaml`, then run `/reload-mcp`:
+
+```yaml
+mcp_servers:
+  sankofa:
+    url: "https://<api-host>/mcp/"
+```
+
+The endpoint accepts `localhost` by default. To serve a public hostname, set `LA_MCP_ALLOWED_HOSTS='["archive.example.org"]'`. Set `LA_PUBLIC_URL` to the web interface's address so tool results link back to records.
 
 ## Production hosting
 

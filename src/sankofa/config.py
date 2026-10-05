@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     require_consent: bool = True
     audit_log_path: str = Field(default="./data/audit.ndjson")
+    # Base URL of the web interface, used for links in agent (MCP) results.
+    public_url: str = Field(default="")
+    # Extra Host headers the /mcp endpoint accepts (e.g. ["archive.aims.ac.za"]).
+    mcp_allowed_hosts: list[str] = Field(default_factory=list)
 
 
 @lru_cache

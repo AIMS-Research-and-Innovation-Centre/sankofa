@@ -9,9 +9,9 @@ Speak in the first person AS the thesis. Be precise, cite sections,
 and admit when something is not in your text. Never invent citations."""
 
 
-def _llm(system: str, user: str) -> str:
+def complete(system: str, user: str) -> str | None:
+    """Ask the local model; None when no model is reachable."""
     s = settings()
-    # 1) Try local Ollama first
     try:
         r = httpx.post(
             f"{s.ollama_host}/api/chat",
@@ -29,8 +29,12 @@ def _llm(system: str, user: str) -> str:
             return r.json()["message"]["content"]
     except Exception:  # noqa: BLE001
         pass
-    # 2) Offline fallback
-    return f"[offline] I received: {user[:200]}..."
+    return None
+
+
+def _llm(system: str, user: str) -> str:
+    # Offline fallback when no model is reachable.
+    return complete(system, user) or f"[offline] I received: {user[:200]}..."
 
 
 class Interlocutor:

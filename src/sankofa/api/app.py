@@ -1,18 +1,26 @@
 """FastAPI app — the archive's public face."""
 from __future__ import annotations
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from ..logging import configure_logging, log
-from .rest import health, theses, chat, oracle, dreams, agents, constellation
+from .rest import health, theses, chat, oracle, dreams, agents, constellation, centres, notebook
+
+try:  # The MCP endpoint is optional: install with `pip install sankofa[agents]`.
+    from ..mcp_server import http_app as mcp_http_app, server as mcp_server
+except ImportError:  # pragma: no cover - depends on installed extras
+    mcp_server = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging()
-    log.info("api.startup")
-    yield
+    log.info("api.startup", mcp=mcp_server is not None)
+    async with AsyncExitStack() as stack:
+        if mcp_server is not None:
+            await stack.enter_async_context(mcp_server.session_manager.run())
+        yield
     log.info("api.shutdown")
 
 
@@ -35,6 +43,10 @@ def create_app() -> FastAPI:
     app.include_router(dreams.router, prefix="/dreams", tags=["dreams"])
     app.include_router(agents.router, prefix="/agents", tags=["agents"])
     app.include_router(constellation.router, tags=["constellation"])
+    app.include_router(centres.router, prefix="/centres", tags=["centres"])
+    app.include_router(notebook.router, prefix="/notebook", tags=["notebook"])
+    if mcp_server is not None:
+        app.mount("/mcp", mcp_http_app())
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def root() -> str:

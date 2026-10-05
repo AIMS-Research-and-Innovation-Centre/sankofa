@@ -54,6 +54,13 @@ def chat() -> None:
 
 
 @app.command()
+def mcp() -> None:
+    """Serve the archive to MCP clients (e.g. Hermes Agent) over stdio."""
+    from .mcp_server import server
+    server.run("stdio")
+
+
+@app.command()
 def verify() -> None:
     """Check that every subsystem is alive."""
     import subprocess
