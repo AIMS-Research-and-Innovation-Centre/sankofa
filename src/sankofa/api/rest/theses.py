@@ -17,11 +17,15 @@ class SearchQuery(BaseModel):
 
 
 @router.get("/")
-def list_theses(limit: int = 50) -> list[dict]:
+def list_theses(limit: int = 200) -> list[dict]:
     return graph().run(
         """MATCH (t:Thesis)
+        OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
+        OPTIONAL MATCH (t)-[:ABOUT]->(c:Concept)
+        WITH t, s, collect(DISTINCT c.name) AS concepts
         RETURN t.id AS id, t.title AS title, t.year AS year,
-               t.campus AS campus, t.author AS author
+               t.campus AS campus, coalesce(t.author, s.id) AS author,
+               t.abstract AS abstract, concepts
         ORDER BY t.year DESC LIMIT $limit""",
         limit=limit,
     )
@@ -29,14 +33,22 @@ def list_theses(limit: int = 50) -> list[dict]:
 
 @router.get("/{thesis_id}")
 def get_thesis(thesis_id: str) -> dict:
-    rows = graph().run("MATCH (t:Thesis {id: $id}) RETURN t", id=thesis_id)
+    rows = graph().run(
+        """MATCH (t:Thesis {id: $id})
+        OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
+        RETURN t, s.id AS author""",
+        id=thesis_id,
+    )
     if not rows:
         raise HTTPException(404, "Thesis not found")
+    thesis = dict(rows[0]["t"])
+    if not thesis.get("author"):
+        thesis["author"] = rows[0]["author"]
     concepts = graph().run(
         "MATCH (t:Thesis {id: $id})-[:ABOUT]->(c:Concept) RETURN c.name AS name",
         id=thesis_id,
     )
-    return {"thesis": rows[0]["t"], "concepts": [c["name"] for c in concepts]}
+    return {"thesis": thesis, "concepts": [c["name"] for c in concepts]}
 
 
 @router.get("/{thesis_id}/neighbors")

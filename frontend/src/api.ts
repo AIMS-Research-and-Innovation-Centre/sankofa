@@ -47,12 +47,13 @@ export function thesis(id: string): Promise<Thesis> {
 export async function archive(query: string): Promise<Thesis[]> {
   const rows = query
     ? await request<{ thesis_id: string; score: number }[]>('/theses/search', { query, limit: 500 })
-    : await request<Omit<Thesis, 'concepts'>[]>('/theses/?limit=500');
-  // The list/search API only returns summaries or IDs. Hydrate in bounded batches.
+    : await request<(Omit<Thesis, 'concepts'> & { concepts?: string[] })[]>('/theses/?limit=500');
+  // Search returns only IDs, and older list APIs return summaries without concepts. Hydrate those in bounded batches.
   const result: Thesis[] = [];
   for (let offset = 0; offset < rows.length; offset += 8) {
     const batch = rows.slice(offset, offset + 8);
     result.push(...await Promise.all(batch.map(async row => {
+      if ('concepts' in row && Array.isArray(row.concepts)) return { ...row, concepts: row.concepts };
       const id = 'thesis_id' in row ? row.thesis_id : row.id;
       const record = await thesis(id);
       return 'title' in row ? { ...record, ...row, author: row.author || record.author, concepts: record.concepts } : record;
