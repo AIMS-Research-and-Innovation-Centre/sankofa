@@ -1,0 +1,531 @@
+
+SANKOFA v0.2 - REDESIGN BRIEF
+=============================
+
+Turning Sankofa from an AI demo into a serious research instrument.
+
+Status:  Draft for review
+Date:    October 2026
+Repo:    github.com/Naphymoro/sankofa
+Author:  Sankofa contributors
+
+
+CONTENTS
+--------
+
+1.  Problem
+2.  What Sankofa Is
+3.  References
+4.  Principles
+5.  Screens
+6.  Design System
+7.  Innovation
+8.  Remove / Keep
+9.  Implementation
+10. Success Criteria
+11. One-Sentence Brief
+12. Recommended Decisions
+
+
+1. PROBLEM
+----------
+
+The current UI says "AI experiment." It doesn't say "research tool."
+
+  Symptom                          Why it fails
+  -------------------------------  ----------------------------------------
+  Emoji in navigation              Consumer app, not scholarly instrument
+  3D galaxy as homepage            Impressive for 5s, unusable for real work
+  Glowing spheres, nebula colors   Reads as "sci-fi demo," not "archive"
+  Purple/blue gradients            Every AI startup since 2023 looks like this
+  Rounded pills, floating panels   No reference to real scholarly tools
+  No information density           One thesis per screen is wasteful
+  No keyboard flow                 Scholars work at typing speed, not mouse
+  No metadata sidebar              arXiv, Scholar, ChemRxiv all use one
+  No sort, no filter, no cite      These aren't features, they're baseline
+  Dark-only aesthetic              Half of academia reads in light, in daylight
+
+The current UI is not bad. It's the wrong genre. It's a landing page
+pretending to be an archive.
+
+
+2. WHAT SANKOFA IS
+------------------
+
+Before designing the interface, we name what Sankofa is - because the UI
+must be the shape of its purpose.
+
+  Sankofa is:
+    - A thesis archive for AIMS students and supervisors
+    - A place scholars go to find, read, cite, and question theses
+    - A knowledge graph that connects ideas across cohorts and campuses
+    - A quiet intelligence that reads the archive and proposes what's missing
+
+  Sankofa is not:
+    - A chatbot
+    - A 3D experience
+    - A showcase for AI
+    - A productivity dashboard
+
+  The user's mental model:
+    "I'm a PhD student. I need to find every AIMS thesis on stochastic
+     epidemics since 2018. I'll read three abstracts, download one PDF,
+     cite it in my lit review. Tomorrow I'll ask the archive what's
+     missing in this space."
+
+Every design decision must serve that person.
+
+
+3. REFERENCES
+-------------
+
+We borrow from three tools, each for a specific reason.
+
+  arXiv.org - for density
+    Everything is text. IDs are monospace. Abstracts are one paragraph,
+    always visible. No images, no cards, no decoration.
+    Steal: the list view, the typography, the restraint.
+
+  Google Scholar - for flow
+    One search box. Results: title (blue link) - authors - journal - year
+    - snippet. Sidebar: "Cited by", "Related articles". Sort by relevance
+    or date.
+    Steal: the metadata hierarchy, the search-first homepage.
+
+  ChemRxiv - for structure
+    Category tags, cleanly displayed. Download buttons prominent but not
+    loud. Author affiliations listed plainly.
+    Steal: the category system, the license/consent display.
+
+  What we do NOT steal: ads, tracking, clutter, pagination. Sankofa is
+  smaller, faster, kinder.
+
+
+4. PRINCIPLES
+-------------
+
+Seven rules to be held to.
+
+  1. Text is the interface
+     No decorative graphics on primary screens. A thesis is a title, an
+     abstract, metadata. The interface is typography. Images appear only
+     where they add information - a small graph preview in the sidebar,
+     never a hero image.
+
+  2. Density over whitespace
+     Aim for 8-12 theses visible on a laptop screen, not 2. Whitespace is
+     for separation, not decoration.
+
+  3. Search is the entrance
+     The homepage is a search box. Not a hero, not a carousel, not an
+     intro animation. A single input, a single button, a list of recent
+     theses below.
+
+  4. Metadata is content
+     A thesis is author, campus, year, concepts, citations, reads,
+     license, consent. All visible on the detail page, in a fixed sidebar.
+     Never hidden behind "show more."
+
+  5. Keyboard-first
+       /        focus search
+       j / k    next/previous thesis
+       Enter    open focused thesis
+       g h      go home
+       g g      go to graph
+       Esc      clear search / close modal
+     No mouse required.
+
+  6. One accent, one mode
+     Light mode by default. Dark mode toggle. Single accent color (blue
+     for links). No gradients. No glow. No shadow.
+
+  7. Graph is a destination, not a home
+     The 3D constellation exists at /graph. It's a view, not a place.
+
+
+5. SCREENS
+----------
+
+  SCREEN 1 - HOME / SEARCH
+
+    ---------------------------------------------------------------
+    Sankofa                        Archive - Graph - About
+    ---------------------------------------------------------------
+
+                 Search AIMS theses
+
+         [ search by title, author, concept...    [Search] ]
+
+         Recent - Ghana - Rwanda - Senegal - Epidemiology - Topology
+
+    2 theses
+    ---------------------------------------------------------------
+
+    aims-demo-2019-gh-001                              2019
+    Stochastic SIR Models for Malaria in Northern Ghana
+    ada - Ghana - 5 concepts
+
+    We develop a stochastic SIR model for malaria transmission in
+    Northern Ghana, calibrating rainfall and temperature covariates...
+
+    stochastic - sir - malaria - bayesian - rainfall
+    ---------------------------------------------------------------
+
+    aims-demo-2022-rw-002                              2022
+    Topological Data Analysis of Climate Networks
+    keza - Rwanda - 3 concepts
+
+    We apply persistent homology to East African rainfall networks...
+
+    topology - manifold - rainfall
+    ---------------------------------------------------------------
+
+    Details:
+      48px sticky header. Serif logo. Three nav links. Search hero
+      80px down. 640px centered input + secondary button. Filter tags
+      below. Thesis count. List items ~120px, 1px separators. ID in
+      mono top-left. Title in blue link. Meta in muted gray. Abstract
+      truncated to 2 lines. Concept pills in gray, no color.
+      No emoji. No icons. No images.
+
+
+  SCREEN 2 - THESIS DETAIL
+
+    -----------------------------------------+----------------------
+    <- Archive                               |  METADATA
+                                             |
+    Stochastic SIR Models for Malaria in     |  ID
+    Northern Ghana                           |  aims-demo-...
+                                             |
+    ada - Ghana - 2019                       |  Author
+    ------------------------------------     |  ada
+                                             |
+    Abstract                                 |  Campus
+                                             |  Ghana
+    We develop a stochastic SIR model for    |
+    malaria transmission in Northern Ghana,  |  Year
+    calibrating rainfall and temperature     |  2019
+    covariates. Using Monte Carlo            |
+    simulation and Bayesian inference, we    |  Concepts
+    estimate seasonal reproduction numbers   |  stochastic
+    and propose vector-control policies.     |  sir
+                                             |  malaria
+    Concepts                                 |  bayesian
+    stochastic - sir - malaria - bayesian -  |  rainfall
+    monte carlo - rainfall - epidemiology    |  -----------
+                                             |
+    ------------------------------------     |  Consented
+                                             |  Yes
+    Ask this thesis                          |
+                                             |  License
+    [ What model do you use?        [Ask] ]  |  AGPL-3.0
+                                             |
+    YOU                                      |  -----------
+    What model do you use?                   |
+                                             |  Graph
+    THESIS                                   |  [small node
+    I used a stochastic SIR (Susceptible-    |   preview]
+    Infected-Recovered) model for malaria    |
+    transmission in Northern Ghana. The      |  Export
+    equations of the model are:              |  BibTeX
+                                             |  RIS
+    S(t+1) = S(t) + recruitment - bS(t)I(t)
+             - mI(t)
+    I(t) = I_disease(t) - gI(t)
+    R(t) = R_disease(t)
+
+    Here b is the transmission rate, m is
+    the removal rate... as detailed in
+    sections 3.2 and 3.3.
+                                             |
+    -----------------------------------------+----------------------
+
+    Details:
+      Two columns - main (720px max) + sidebar (260px, sticky). Title
+      serif 26px. Meta in muted. Abstract 15px, 1.7 line-height.
+      Concepts as plain text separated by dots. Chat thread below with
+      all-caps role labels ("YOU", "THESIS"). Sidebar quiet -
+      small-caps labels, body values. Graph preview 200x140px. Export
+      links. No emoji anywhere.
+
+
+  SCREEN 3 - ORACLE
+
+    ---------------------------------------------------------------
+    Sankofa                        Archive - Graph - About
+    ---------------------------------------------------------------
+
+    The Oracle
+
+    Reads the shape of the archive and proposes what's missing.
+
+    [ malaria                                    [->] ]
+
+    5 gaps found
+    ---------------------------------------------------------------
+
+    01  On the intersection of malaria and rainfall
+
+        Novelty 0.65 - Feasibility 0.15
+        3 theses touch these concepts, none together.
+
+        malaria - rainfall
+
+    02  On the intersection of malaria and topology
+
+        Novelty 0.30 - Feasibility 0.10
+        Untested pairing suggested by graph neighbours.
+
+        malaria - topology
+
+    Details:
+      Serif title "The Oracle". One-line muted description. Input +
+      secondary button. Results numbered 01, 02 in mono. Proposal
+      title serif 18px. Metrics line: Novelty 0.65 - Feasibility 0.15.
+      Rationale body text. Concepts small.
+
+
+  SCREEN 4 - DREAMS
+
+    ---------------------------------------------------------------
+    Sankofa                        Archive - Graph - About
+    ---------------------------------------------------------------
+
+    Dreams
+
+    Every night the archive walks its own graph and records what it
+    sees. These are not predictions. They are passages.
+
+    [Trigger a dream]
+
+    ---------------------------------------------------------------
+
+    2026-10-01 - 12:55 UTC
+
+    Last night I dreamt of
+      stochastic (thinking about)
+      malaria (citing)
+      rainfall (belonging to)
+    and I woke up believing they belong together.
+
+    ---------------------------------------------------------------
+
+    2026-10-01 - 12:43 UTC
+
+    Last night I dreamt of
+      bayesian (thinking about)
+      climate (belonging to)
+    and I woke up believing they belong together.
+
+    Details:
+      No emoji. Dreams as text, timestamped. Serif title. Body in
+      slightly indented mono/italic mix. Thin separators, generous
+      rhythm.
+
+
+  SCREEN 5 - GRAPH (/graph)
+
+    The current Constellation becomes /graph. Same Three.js, but:
+      - Reachable from nav as Graph
+      - No auto-rotation, no nebula background
+      - Plain black background, nodes as small dots
+      - Click a node -> opens thesis detail
+      - Floating search box top-left
+      - Zoom bounded; labels appear at closer zoom
+
+    The galaxy is a tool - not a landing page.
+
+
+  SCREEN 6 - ABOUT
+
+    A short page: what Sankofa is, where the name comes from, AIMS
+    context, ethics charter. Text-only. Serif headings.
+
+
+6. DESIGN SYSTEM
+----------------
+
+  TYPE SCALE
+
+    Token     Size    Weight  Family   Use
+    --------  ------  ------  -------  --------------------------
+    display   32px    400     serif    Homepage headline
+    h1        26px    400     serif    Thesis title
+    h2        20px    600     sans     Section headers
+    body      15px    400     sans     Everything else
+    meta      13px    400     sans     Author - campus - year
+    mono      12px    400     mono     IDs, equations, numbers
+    label     11px    600     sans     Metadata labels
+                                      (uppercase)
+
+  SPACING SCALE
+
+    4 - 8 - 12 - 16 - 24 - 32 - 48 - 64 - 96
+    Only these values.
+
+  COLORS - LIGHT MODE
+
+    background     #ffffff
+    surface        #f8f9fa
+    border         #dadce0
+    border-strong  #bdc1c6
+    text           #202124
+    text-muted     #5f6368
+    text-faint     #80868b
+    link           #1a0dab
+    link-hover     #0b0080
+    accent         #1a73e8
+    danger         #d93025
+
+  COLORS - DARK MODE
+
+    background     #0d1117
+    surface        #161b22
+    border         #30363d
+    border-strong  #484f58
+    text           #e6edf3
+    text-muted     #8b949e
+    text-faint     #6e7681
+    link           #58a6ff
+    link-hover     #79c0ff
+    accent         #1f6feb
+    danger         #f85149
+
+    No gradients. No shadows. No glow.
+
+  BORDERS
+
+    One radius: 4px. Everything. Nothing rounder.
+
+  MOTION
+
+    One transition: 120ms ease on background and color. Nothing else
+    animates.
+
+
+7. INNOVATION
+-------------
+
+Innovation is in capabilities, not decoration.
+
+  1. Search that understands concepts
+     Hybrid: vector embeddings + graph reachability. Type "malaria" ->
+     theses about it, theses citing it, theses using similar methods.
+     Surface: one input.
+
+  2. Every thesis speaks
+     Chat is inline on the detail page. You don't go to a "chat page."
+     You ask the thesis right there, in the flow of reading. arXiv
+     doesn't have this. Scholar doesn't have it.
+
+  3. The Oracle proposes what doesn't exist
+     Google Scholar shows what's been written. Sankofa shows what
+     hasn't. That's genuinely novel - and it deserves a clean page,
+     not a chat bubble.
+
+  4. The graph as a navigation tool
+     Move from thesis to thesis through ideas - click a concept, see
+     what else touches it. Reachable at /graph, not forced.
+
+  5. Metadata as first-class content
+     Consent status, license, tags, citations, reads - all visible.
+     Most archives hide this. Sankofa shows it because Sankofa cares
+     about sovereignty. The design says: this thesis is a person's
+     work, and we honor that.
+
+
+8. REMOVE / KEEP
+----------------
+
+  REMOVE
+    - All UI emoji (logo, nav, buttons, headers)
+    - The 3D galaxy from the homepage (moved to /graph)
+    - Every gradient, shadow, glow
+    - Rounded pills over 4px radius
+    - Words: "AI", "magic", "intelligent", "powered by"
+    - Colors: purple, teal, pink (only blue + gray)
+    - The page name "Constellation" (becomes "Graph")
+    - Animations over 120ms
+    - Any marketing-toned copy
+
+  KEEP
+    - Every backend capability (src/sankofa/ untouched)
+    - API on port 8001
+    - REPL (sankofa chat)
+    - sankofa CLI
+    - Three-interface model (CLI, REPL, API) + web UI as fourth
+    - Name Sankofa, its meaning, ethics charter, offline-first
+      philosophy
+
+
+9. IMPLEMENTATION
+-----------------
+
+  Step 1   Replace frontend/src/styles.css with the design system above.
+
+  Step 2   Replace App.tsx: text-only header (Sankofa - Archive - Graph
+           - About), theme toggle, routes (/, /thesis/:id, /oracle,
+           /dreams, /graph, /about), keyboard shortcuts.
+
+  Step 3   Replace Constellation.tsx with Archive.tsx: search hero,
+           filter tags, arXiv-density list.
+
+  Step 4   Move 3D galaxy to Graph.tsx at /graph. Remove auto-rotate.
+           Plain black background. Floating search box top-left.
+
+  Step 5   Rewrite ThesisView.tsx: two-column, sticky sidebar, inline
+           chat. No emoji in role labels.
+
+  Step 6   Rewrite Oracle.tsx: serif title, description, numbered
+           results (01, 02 in mono).
+
+  Step 7   Rewrite DreamFeed.tsx: serif title, quiet typographic block
+           per dream.
+
+  Step 8   Add About.tsx: text-only page, serif headings.
+
+  Step 9   Commit and push. Tag v0.2.0-alpha.
+
+
+10. SUCCESS CRITERIA
+--------------------
+
+  The redesign works if:
+
+    - A supervisor familiar with arXiv or Scholar feels immediately
+      at home
+    - A stranger can search, filter, open, and read a thesis in under
+      10 seconds
+    - Chat feels like a feature of reading, not a chat app bolted on
+    - Page loads in under 300ms on a laptop
+    - Nothing on screen says "AI"
+    - The interface is fully usable without a mouse
+    - A screenshot could sit next to arXiv and not look out of place
+
+
+11. ONE-SENTENCE BRIEF
+----------------------
+
+  Redesign Sankofa as a scholar-grade archive: text-first,
+  keyboard-native, dense, quiet, and serious - borrowing arXiv's
+  restraint, Scholar's flow, and ChemRxiv's structure - while keeping
+  every capability intact and moving the 3D graph from centerpiece to
+  destination.
+
+
+12. RECOMMENDED DECISIONS
+-------------------------
+
+  Decision          Recommendation
+  ----------------  ------------------------------------------------
+  Default view      List (arXiv-style). Graph at /graph.
+  Emoji in UI       None. Not even in the logo.
+  Color             Light mode default, blue accent, 4px radius,
+                    120ms transition.
+  Typography        Serif titles - sans body - mono IDs.
+  Innovation        In hybrid search, inline chat, the Oracle, the
+                    graph - not in decoration.
+
+
+END OF BRIEF
+
