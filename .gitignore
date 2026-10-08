@@ -18,3 +18,5 @@ frontend/test-results/
 frontend/playwright-report/
 .aider*
 .sankofa_history
+.wrangler/
+frontend/.wrangler/
