@@ -6,6 +6,7 @@ export class SankofaApi extends Container {
   envVars = {
     LA_REPOSITORY_DB_PATH: '/app/data/repository.sqlite3',
     LA_REPOSITORY_STORAGE_PATH: '/app/data/repository-files',
+    LA_PUBLIC_URL: 'https://sankofa-web.couma.workers.dev',
     LA_SESSION_COOKIE_SECURE: 'true',
   };
 }
