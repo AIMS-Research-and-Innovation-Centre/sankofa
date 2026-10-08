@@ -6,6 +6,12 @@ from ...graph.embeddings.qdrant_client import vectors
 router = APIRouter()
 
 
+@router.get("/ping")
+def ping() -> dict[str, str]:
+    """Lightweight readiness probe used by Cloudflare Containers."""
+    return {"status": "ok"}
+
+
 @router.get("/health")
 def health() -> dict:
     status: dict = {"api": "ok"}
