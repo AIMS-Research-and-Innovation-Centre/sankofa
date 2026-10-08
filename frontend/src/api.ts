@@ -32,6 +32,7 @@ export async function request<T>(path: string, body?: unknown, signal?: AbortSig
   const response = await fetch(`${base}${path}`, {
     method: options.method || (body === undefined ? 'GET' : 'POST'),
     headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}) },
+    credentials: 'include',
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(75000)]) : AbortSignal.timeout(75000),
   });

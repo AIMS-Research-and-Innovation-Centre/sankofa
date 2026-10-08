@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from ..logging import configure_logging, log
+from ..config import settings
 from .rest import health, theses, chat, oracle, dreams, agents, constellation, centres, notebook, curation, auth, repository
 
 try:  # The MCP endpoint is optional: install with `pip install sankofa[agents]`.
@@ -52,10 +53,13 @@ def create_app() -> FastAPI:
         version="0.1.0-alpha",
         lifespan=lifespan,
     )
+    allowed_origins = ["http://localhost:5173", "https://sankofa-web.couma.workers.dev"]
+    if settings().public_url and settings().public_url not in allowed_origins:
+        allowed_origins.append(settings().public_url)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
-        allow_credentials=False,
+        allow_origins=allowed_origins, allow_methods=["*"], allow_headers=["*"],
+        allow_credentials=True,
     )
     app.include_router(health.router, tags=["health"])
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
