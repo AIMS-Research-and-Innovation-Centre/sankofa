@@ -7,7 +7,6 @@ from pathlib import Path
 
 from ..agents.curator.agent import Curator
 from ..graph.client import graph
-from ..graph.embeddings.encoder import encode_one
 from ..graph.embeddings.qdrant_client import vectors
 from ..logging import log
 from ..substrate.event_store import event_store
@@ -23,6 +22,10 @@ def _thesis_id(path: Path, source_id: str | None = None) -> str:
 
 def ingest(path: str | Path, author: str = "", campus: str = "", year: int = 0,
            source_id: str | None = None, source_url: str = "") -> str:
+    # Keep the repository/auth API usable in lightweight deployments. The
+    # sentence-transformers model is only needed when ingesting/searching.
+    from ..graph.embeddings.encoder import encode_one
+
     path = Path(path)
     parsed = extract(path)
     abstract = extract_abstract(parsed["text"])

@@ -1,11 +1,12 @@
 """Hybrid search — vector similarity + graph reachability."""
 from __future__ import annotations
-from .encoder import encode_one
 from .qdrant_client import vectors
 from ..client import graph
 
 
 def hybrid_search(query: str, limit: int = 10) -> list[dict]:
+    from .encoder import encode_one
+
     q_vec = encode_one(query)
     semantic = {h["thesis_id"]: h["score"]
                 for h in vectors().search(q_vec, limit=limit * 2)}

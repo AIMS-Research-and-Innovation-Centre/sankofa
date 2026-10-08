@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sankofa-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-06",
+  "containers": [
+    {
+      "class_name": "SankofaApi",
+      "image": "./Dockerfile",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "SANKOFA_API", "class_name": "SankofaApi" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["SankofaApi"] }
+  ],
+  "observability": { "enabled": true }
+}

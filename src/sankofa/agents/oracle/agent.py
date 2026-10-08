@@ -1,7 +1,6 @@
 """Oracle — reads the graph's shape and proposes theses that should exist."""
 from __future__ import annotations
 from ...graph.client import graph
-from ...graph.embeddings.encoder import encode_one
 from ...graph.embeddings.qdrant_client import vectors
 from .novelty_scorer import novelty
 from .feasibility_scorer import feasibility
@@ -11,6 +10,8 @@ class Oracle:
     name = "oracle"
 
     def propose(self, topic: str, top_k: int = 5) -> list[dict]:
+        from ...graph.embeddings.encoder import encode_one
+
         existing = vectors().search(encode_one(topic), limit=20)
         existing_ids = {e["thesis_id"] for e in existing}
 
