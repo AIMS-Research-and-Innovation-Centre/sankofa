@@ -38,7 +38,7 @@ A durable implementation should allocate a stable item UUID, store an immutable 
 
 ## Decisions to resolve in the governing document
 
-1. Clarify the Centre list. The document requires six Centres but names five examples and leaves the remainder unconfirmed. Treat AIMS RIC as an explicitly approved organisational unit for the pilot rather than silently adding or merging it.
+1. The controlled Centre list now includes AIMS Tanzania alongside South Africa, Senegal, Ghana, Cameroon, Rwanda and AIMS RIC. Treat AIMS RIC as an explicitly approved research unit rather than silently adding or merging it.
 2. Validate the custom repository against the roadmap's acceptance evidence: durable storage, restore, metadata, workflow, access control, harvesting, statistics and AI withdrawal propagation.
 3. Resolve joint ownership and acceptance versus reporting that consults the Librarian only occasionally. Metadata, access rules, reporting and migration acceptance require continuous library participation.
 4. Permit honestly absent legacy metadata. A translated title, bilingual abstract or supervisor ORCID cannot be invented to satisfy a required-field rule. Distinguish mandatory deposit fields from legacy completeness targets and record exceptions.

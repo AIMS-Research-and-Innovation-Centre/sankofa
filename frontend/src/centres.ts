@@ -6,6 +6,7 @@ export const CENTRES: Centre[] = [
   { slug: 'ghana', name: 'AIMS Ghana', short: 'Ghana', country: 'Ghana', city: 'Biriwa', kind: 'centre', founded: 2012, aliases: ['gh', 'biriwa', 'accra'] },
   { slug: 'cameroon', name: 'AIMS Cameroon', short: 'Cameroon', country: 'Cameroon', city: 'Limbe', kind: 'centre', founded: 2013, aliases: ['cm', 'limbe'] },
   { slug: 'rwanda', name: 'AIMS Rwanda', short: 'Rwanda', country: 'Rwanda', city: 'Kigali', kind: 'centre', founded: 2016, aliases: ['rw', 'kigali'] },
+  { slug: 'tanzania', name: 'AIMS Tanzania', short: 'Tanzania', country: 'Tanzania', city: 'Bagamoyo', kind: 'centre', founded: 2014, aliases: ['tz', 'bagamoyo', 'tanzania'] },
   { slug: 'ric', name: 'AIMS Research and Innovation Centre', short: 'AIMS RIC', country: 'Rwanda', city: 'Kigali', kind: 'research', founded: 2021, aliases: ['aims ric', 'aims-ric', 'research and innovation centre', 'research & innovation centre'] },
 ];
 // Programme and theme communities (roadmap C2 to C5). Items join through their recorded programme.

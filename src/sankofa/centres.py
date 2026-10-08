@@ -36,6 +36,8 @@ CENTRES: tuple[Centre, ...] = (
            ("cm", "limbe")),
     Centre("rwanda", "AIMS Rwanda", "Rwanda", "Kigali", "centre", 2016,
            ("rw", "kigali")),
+    Centre("tanzania", "AIMS Tanzania", "Tanzania", "Bagamoyo", "centre", 2014,
+           ("tz", "bagamoyo", "tanzania")),
     Centre("ric", "AIMS Research and Innovation Centre", "Rwanda", "Kigali", "research", 2021,
            ("aims ric", "aims-ric", "research and innovation centre", "research & innovation centre")),
 )
