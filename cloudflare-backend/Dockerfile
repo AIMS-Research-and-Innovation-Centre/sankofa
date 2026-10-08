@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 WORKDIR /app
-ADD https://github.com/Naphymoro/sankofa/archive/586137eceb60027720e8c844a6a0d1656c53e6ef.tar.gz /tmp/sankofa.tar.gz
+ADD https://github.com/Naphymoro/sankofa/archive/d8807a7843b5b5cf9d5ca4686b56b02fc54bd7c9.tar.gz /tmp/sankofa.tar.gz
 RUN mkdir /tmp/sankofa && tar -xzf /tmp/sankofa.tar.gz --strip-components=1 -C /tmp/sankofa
 WORKDIR /tmp/sankofa
 # The full semantic-search extra pulls CUDA/NVIDIA wheels. Cloudflare's
