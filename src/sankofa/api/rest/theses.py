@@ -23,17 +23,23 @@ def list_theses(limit: int = 200, sankofa_session: str | None = Cookie(default=N
     records = RepositoryStore().list_published(min(limit, 500))
     if records:
         return [{"id": r["id"], "title": r["metadata"].get("title", r["id"]), "abstract": r["metadata"].get("abstract", ""), "year": r["metadata"].get("year"), "author": "; ".join(r["metadata"].get("authors", [])), "concepts": r["metadata"].get("keywords", [])} for r in records]
-    return graph().run(
-        """MATCH (t:Thesis)
-        OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
-        OPTIONAL MATCH (t)-[:ABOUT]->(c:Concept)
-        WITH t, s, collect(DISTINCT c.name) AS concepts
-        RETURN t.id AS id, t.title AS title, t.year AS year,
-               t.campus AS campus, coalesce(t.author, s.id) AS author,
-               t.abstract AS abstract, concepts
-        ORDER BY t.year DESC LIMIT $limit""",
-        limit=limit,
-    )
+    # The graph is an optional enrichment service.  A fresh self-contained
+    # deployment has no graph records yet, so an unavailable graph must not
+    # turn the public catalogue request into a 500/network error.
+    try:
+        return graph().run(
+            """MATCH (t:Thesis)
+            OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
+            OPTIONAL MATCH (t)-[:ABOUT]->(c:Concept)
+            WITH t, s, collect(DISTINCT c.name) AS concepts
+            RETURN t.id AS id, t.title AS title, t.year AS year,
+                   t.campus AS campus, coalesce(t.author, s.id) AS author,
+                   t.abstract AS abstract, concepts
+            ORDER BY t.year DESC LIMIT $limit""",
+            limit=limit,
+        )
+    except Exception:
+        return []
 
 
 @router.get("/{thesis_id}")
