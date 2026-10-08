@@ -114,6 +114,8 @@ For GitHub Pages, see [deployment instructions](docs/github-pages.md). The Pages
 
 For a backend on another origin, copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE` and `VITE_GRAPH_WS` before building. Use HTTPS/WSS on secure deployments. Values in frontend environment variables are public and must not contain credentials.
 
+For the current document deposit process, see the [document-upload tutorial](docs/upload-tutorial.md). The API supports authenticated deposits and the administration page supports review, but the polished user-facing upload form is still pending.
+
 ## Data and capability limits
 
 - List/search responses are hydrated from the existing thesis detail endpoint in batches of eight. Author names can also be read from linked Student nodes. The interface displays up to 500 matching records and reports that limit.
