@@ -1,8 +1,11 @@
 """Qdrant — vector memory."""
 from __future__ import annotations
+
 import uuid
+
 from qdrant_client import QdrantClient as _Q
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, PointIdsList, PointStruct, VectorParams
+
 from ...config import settings
 
 VECTOR_SIZE = 384
@@ -35,6 +38,12 @@ class VectorStore:
     def search(self, vector: list[float], limit: int = 10) -> list[dict]:
         hits = self.client.search(self.collection, query_vector=vector, limit=limit)
         return [{"thesis_id": h.payload.get("thesis_id"), "score": h.score} for h in hits]
+
+    def remove(self, thesis_id: str) -> None:
+        self.client.delete(
+            collection_name=self.collection,
+            points_selector=PointIdsList(points=[str(uuid.uuid5(uuid.NAMESPACE_URL, thesis_id))]),
+        )
 
 
 _store: VectorStore | None = None

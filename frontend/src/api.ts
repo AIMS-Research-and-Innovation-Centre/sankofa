@@ -3,27 +3,68 @@ export interface Thesis {
   abstract?: string; concepts: string[]; consented?: boolean; consent?: boolean;
   license?: string; citations?: string[] | number; reads?: number; pdf_url?: string;
   programme?: string; supervisor?: string; language?: string; doi?: string;
+  // Curated metadata (see /theses/:id/metadata).
+  authors?: Person[]; supervisors?: Person[]; title_fr?: string; abstract_fr?: string; msc?: string[];
+  date_issued?: string; licence?: string; access?: Access; embargo_end?: string; doi_state?: 'draft' | 'findable' | null; degree?: string;
 }
+export type Access = 'open' | 'embargoed' | 'restricted' | 'metadata-only';
+export interface Person { family: string; given?: string; orcid?: string | null }
+export interface Funder { name: string; identifier?: string | null; award?: string | null }
+export interface Related { identifier: string; kind: 'DOI' | 'URL' | 'Handle' | 'arXiv'; relation: string }
+export interface Metadata {
+  id: string; title: string; title_fr: string | null; authors: Person[]; supervisors: Person[]; abstract: string | null; abstract_fr: string | null;
+  keywords: string[]; msc: string[]; year: number | null; date_issued: string | null; centre: string | null; programme: string | null; degree: string | null;
+  language: string | null; licence: string | null; access: Access; embargo_end: string | null; funders: Funder[]; related: Related[]; doi: string | null; doi_state: 'draft' | 'findable' | null;
+}
+export interface Completeness { score: number; required_score: number; missing_required: string[]; missing_recommended: string[]; doi_ready: boolean }
+export interface DoiService { configured: boolean; test: boolean; prefix: string | null; curation_enabled: boolean; landing_pages: boolean }
+export interface MetadataRecord { metadata: Metadata; completeness: Completeness; datacite: Record<string, unknown>; doi_service: DoiService; warning?: string }
 export interface Neighbor { id?: string; label: string; labels: string[] }
 export interface Proposal { title: string; concepts: string[]; novelty: number; feasible: number; rationale: string }
 export interface Dream { id: string; emitted_at: string; text: string; path: { from: string; rel: string; to: string }[] }
 export interface NotebookAnswer { answer: string; mode: 'model' | 'extractive' | 'none' | 'local'; sources: { n: number; id: string; title: string }[] }
+export interface AuthUser { user: Record<string, unknown>; role: 'researcher' | 'librarian' | 'editor'; }
 
 const base = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 export const archiveConnected = import.meta.env.VITE_PAGES !== 'true' || !!import.meta.env.VITE_API_BASE;
-export async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+export async function request<T>(path: string, body?: unknown, signal?: AbortSignal, options: { method?: string; token?: string } = {}): Promise<T> {
   if (!archiveConnected) throw new Error('The archive service is not connected to this website yet.');
   const response = await fetch(`${base}${path}`, {
-    method: body === undefined ? 'GET' : 'POST',
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    method: options.method || (body === undefined ? 'GET' : 'POST'),
+    headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(75000)]) : AbortSignal.timeout(75000),
   });
   if (!response.ok) {
     if (response.status === 404) throw new Error('This record was not found in the archive.');
+    // Curator endpoints explain refusals; show their reason rather than a generic message.
+    let detail: unknown; try { detail = (await response.json()).detail; } catch { /* No JSON body. */ }
+    if (typeof detail === 'string') throw new Error(detail);
+    if (Array.isArray(detail) && detail.length) throw new Error(detail.map((d: { loc?: (string | number)[]; msg?: string }) => `${(d.loc || []).filter(l => l !== 'body').join('.')}: ${(d.msg || '').replace(/^Value error, /, '')}`).join('\n'));
     throw new Error(`The archive could not complete the request (${response.status}). Check that the API and its services are running, then retry.`);
   }
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export async function login(email: string, password: string): Promise<AuthUser> {
+  return request<AuthUser>('/auth/login', { email, password });
+}
+
+export async function currentUser(): Promise<AuthUser | null> {
+  try { return await request<AuthUser>('/auth/me'); } catch { return null; }
+}
+
+export async function logout(): Promise<void> {
+  await request<void>('/auth/logout', undefined, undefined, { method: 'POST' });
+}
+
+export async function workflowItems(): Promise<Record<string, unknown>[]> {
+  return request<Record<string, unknown>[]>('/repository/workflow');
+}
+
+export async function workflowAction(id: string, action: string, reason = ''): Promise<Record<string, unknown>> {
+  return request<Record<string, unknown>>(`/repository/workflow/${encodeURIComponent(id)}/${action}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`, undefined, undefined, { method: 'POST' });
 }
 
 const cache = new Map<string, Promise<Thesis>>();

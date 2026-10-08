@@ -8,6 +8,10 @@ import Centres, { CentrePage } from './components/Centres';
 import Browse from './components/Browse';
 import Notebook from './components/Notebook';
 import Connect from './components/Connect';
+import Curate from './components/Curate';
+import Curation from './components/Curation';
+import SignIn from './components/SignIn';
+import Admin from './components/Admin';
 import { Link, Navigation, changeRoute, currentRoute, routeHref } from './router';
 import { archiveConnected } from './api';
 import { Language, translate, type Lang } from './i18n';
@@ -59,12 +63,16 @@ export default function App() {
   }, [navigate, path]);
   let content: ReactNode; let wide = false;
   if (path === '/') content = <Archive search={search} navigate={navigate} />;
+  else if (/^\/thesis\/.+\/curate$/.test(path)) { let id = ''; try { id = decodeURIComponent(path.slice(8, -7)); } catch {} content = id ? <Curate key={id} id={id} /> : <p>Invalid thesis ID.</p>; }
+  else if (path === '/curation') content = <Curation />;
   else if (path.startsWith('/thesis/')) { let id = ''; try { id = decodeURIComponent(path.slice(8)); } catch {} content = id ? <ThesisView key={id} id={id} /> : <p>Invalid thesis ID.</p>; }
   else if (path === '/centres') content = <Centres />;
   else if (path.startsWith('/centres/')) content = <CentrePage slug={path.slice(9)} />;
   else if (path === '/browse') content = <Browse search={search} navigate={navigate} />;
   else if (path === '/notebook') { content = <Notebook />; wide = true; }
   else if (path === '/connect') content = <Connect />;
+  else if (path === '/login') content = <SignIn navigate={navigate} />;
+  else if (path === '/admin') content = <Admin navigate={navigate} />;
   else if (path === '/oracle') content = <Oracle />;
   else if (path === '/dreams') content = <DreamFeed />;
   else if (path === '/about') content = <About />;
@@ -76,11 +84,12 @@ export default function App() {
       <Link href="/" className="wordmark" aria-label="Sankofa home"><span className="mark" aria-hidden="true">◈</span>Sankofa</Link>
       <nav aria-label="Main navigation">{NAV.map(([href, label]) => <Link key={href} href={href} aria-current={section === href ? 'page' : undefined}>{t(label)}{href === '/notebook' && sources > 0 && <span className="count-badge" aria-label={`${sources} sources`}>{sources}</span>}</Link>)}</nav>
       <div className="header-tools">
+        <Link href="/login">Sign in</Link><Link href="/admin">Admin</Link>
         <button className="ghost" onClick={() => setLang(l => l === 'en' ? 'fr' : 'en')} aria-label={lang === 'en' ? 'Afficher en français' : 'Show in English'} lang={lang === 'en' ? 'fr' : 'en'}>{lang === 'en' ? 'FR' : 'EN'}</button>
         <button className="ghost theme-toggle" onClick={toggleTheme} aria-label={t(theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode')}>{theme === 'light' ? t('Dark') : t('Light')}</button>
       </div>
     </div></header>
     <main id="main" ref={main} tabIndex={-1} className={wide ? 'site-main wide' : 'site-main'}>{!archiveConnected && <div className="service-notice" role="status">The archive service is not connected. Theses, questions, and live connections will be available once the archive service is connected.</div>}<ErrorBoundary key={path}>{content}</ErrorBoundary></main>
-    <footer className="site-footer"><div><strong>Sankofa</strong><span>{t('The scholarly archive of the AIMS network')}</span></div><div className="footer-links"><Link href="/about">{t('About')}</Link><Link href="/oracle">The Oracle</Link><Link href="/dreams">Dreams</Link><Link href="/connect">{t('Connect an agent')}</Link></div></footer>
+    <footer className="site-footer"><div><strong>Sankofa</strong><span>{t('The scholarly archive of the AIMS network')}</span></div><div className="footer-links"><Link href="/about">{t('About')}</Link><Link href="/oracle">The Oracle</Link><Link href="/dreams">Dreams</Link><Link href="/connect">{t('Connect an agent')}</Link><Link href="/curation">Curation</Link></div></footer>
   </Navigation></Language.Provider>;
 }

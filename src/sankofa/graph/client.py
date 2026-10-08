@@ -1,8 +1,12 @@
 """Neo4j client — the archive's long-term memory."""
 from __future__ import annotations
+
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
-from neo4j import GraphDatabase, Driver
+from typing import Any
+
+from neo4j import Driver, GraphDatabase
+
 from ..config import settings
 
 
@@ -30,7 +34,8 @@ class GraphClient:
             """
             MERGE (t:Thesis {id: $id})
             SET t.title = $title, t.abstract = $abstract,
-                t.year = $year, t.campus = $campus
+                t.year = $year, t.campus = $campus, t.author = $author,
+                t.source_id = $source_id, t.source_url = $file_path
             WITH t
             MERGE (s:Student {id: $author})
             MERGE (s)-[:AUTHORED]->(t)
@@ -39,6 +44,9 @@ class GraphClient:
             """,
             **kw,
         )
+
+    def remove_thesis(self, thesis_id: str) -> None:
+        self.run("MATCH (t:Thesis {id: $id}) DETACH DELETE t", id=thesis_id)
 
     def link_concept(self, thesis_id: str, concept_name: str) -> None:
         self.run(
@@ -50,6 +58,9 @@ class GraphClient:
             """,
             tid=thesis_id, name=concept_name,
         )
+
+    def clear_concepts(self, thesis_id: str) -> None:
+        self.run("MATCH (t:Thesis {id: $id})-[r:ABOUT]->(:Concept) DELETE r", id=thesis_id)
 
 
 _client: GraphClient | None = None

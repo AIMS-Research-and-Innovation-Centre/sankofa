@@ -1,4 +1,4 @@
-.PHONY: bootstrap dev seed verify smoke clean ui ui-build ui-test
+.PHONY: bootstrap dev seed verify smoke clean ui ui-build ui-test deploy
 
 bootstrap:
 	cp -n .env.example .env || true
@@ -32,3 +32,6 @@ ui-build:
 
 ui-test:
 	cd frontend && npm test
+
+deploy:
+	docker compose -f deploy/compose.yml up -d --build

@@ -10,6 +10,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from .centres import CENTRES, resolve
 from .config import settings
+from .links import record_url as _link
 
 READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
 
@@ -25,9 +26,6 @@ server = MCPServer(
 )
 
 
-def _link(thesis_id: str) -> str | None:
-    base = settings().public_url.rstrip("/")
-    return f"{base}/#/thesis/{thesis_id}" if base else None
 
 
 def _summary(t: dict[str, Any]) -> dict[str, Any]:
@@ -36,6 +34,9 @@ def _summary(t: dict[str, Any]) -> dict[str, Any]:
         "id": t.get("id"), "title": t.get("title"), "author": t.get("author"),
         "year": t.get("year"), "centre": centre.name if centre else t.get("campus"),
         "abstract": t.get("abstract"), "concepts": t.get("concepts", []), "url": _link(t["id"]),
+        "doi": f"https://doi.org/{t['doi']}" if t.get("doi") and t.get("doi_state") == "findable" else None,
+        "supervisors": [p.get("given", "") + " " + p["family"] for p in t.get("supervisors", [])] or None,
+        "licence": t.get("licence"),
     }
 
 

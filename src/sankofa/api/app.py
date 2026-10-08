@@ -5,12 +5,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from ..logging import configure_logging, log
-from .rest import health, theses, chat, oracle, dreams, agents, constellation, centres, notebook
+from .rest import health, theses, chat, oracle, dreams, agents, constellation, centres, notebook, curation, auth, repository
 
 try:  # The MCP endpoint is optional: install with `pip install sankofa[agents]`.
     from ..mcp_server import http_app as mcp_http_app, server as mcp_server
 except ImportError:  # pragma: no cover - depends on installed extras
     mcp_server = None
+
+
+class _McpMount:
+    """Stable mount for /mcp whose inner app is rebuilt at each startup.
+
+    The MCP session manager can only run once, so a fresh one is made per lifespan.
+    """
+
+    def __init__(self) -> None:
+        self.app = None
+
+    async def __call__(self, scope, receive, send):  # type: ignore[no-untyped-def]
+        if self.app is None:
+            from starlette.responses import PlainTextResponse
+            return await PlainTextResponse("MCP endpoint is starting", 503)(scope, receive, send)
+        await self.app(scope, receive, send)
+
+
+mcp_mount = _McpMount()
 
 
 @asynccontextmanager
@@ -19,8 +38,10 @@ async def lifespan(app: FastAPI):
     log.info("api.startup", mcp=mcp_server is not None)
     async with AsyncExitStack() as stack:
         if mcp_server is not None:
+            mcp_mount.app = mcp_http_app()
             await stack.enter_async_context(mcp_server.session_manager.run())
         yield
+        mcp_mount.app = None
     log.info("api.shutdown")
 
 
@@ -37,7 +58,11 @@ def create_app() -> FastAPI:
         allow_credentials=False,
     )
     app.include_router(health.router, tags=["health"])
+    app.include_router(auth.router, prefix="/auth", tags=["auth"])
+    app.include_router(repository.router, prefix="/repository", tags=["repository"])
+    app.include_router(curation.router, prefix="/theses", tags=["curation"])
     app.include_router(theses.router, prefix="/theses", tags=["theses"])
+    app.include_router(curation.report_router, prefix="/curation", tags=["curation"])
     app.include_router(chat.router, prefix="/chat", tags=["chat"])
     app.include_router(oracle.router, prefix="/oracle", tags=["oracle"])
     app.include_router(dreams.router, prefix="/dreams", tags=["dreams"])
@@ -46,7 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(centres.router, prefix="/centres", tags=["centres"])
     app.include_router(notebook.router, prefix="/notebook", tags=["notebook"])
     if mcp_server is not None:
-        app.mount("/mcp", mcp_http_app())
+        app.mount("/mcp", mcp_mount)
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def root() -> str:

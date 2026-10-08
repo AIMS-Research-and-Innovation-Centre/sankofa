@@ -1,0 +1,49 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    env_file: ../.env
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    environment:
+      LA_NEO4J_URI: bolt://neo4j:7687
+      LA_QDRANT_URL: http://qdrant:6333
+    ports:
+      - "8001:8001"
+    volumes:
+      - sankofa_data:/app/data
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    depends_on:
+      - api
+    ports:
+      - "8088:80"
+
+  neo4j:
+    image: neo4j:5.24
+    environment:
+      NEO4J_AUTH: ${LA_NEO4J_USER:-neo4j}/${LA_NEO4J_PASSWORD:-livingarchive}
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  qdrant:
+    image: qdrant/qdrant:v1.11.0
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  sankofa_data:
+  neo4j_data:
+  qdrant_data:

@@ -92,7 +92,21 @@ mcp_servers:
 
 The endpoint accepts `localhost` by default. To serve a public hostname, set `LA_MCP_ALLOWED_HOSTS='["archive.example.org"]'`. Set `LA_PUBLIC_URL` to the web interface's address so tool results link back to records.
 
+## Metadata and DOIs
+
+Each thesis carries the roadmap's metadata schema (Section 5): authors and supervisors with ORCID, English and French titles and abstracts, keywords and MSC 2020 codes, Centre, programme, language, licence, access and embargo, funders, and related articles, datasets and code. Sankofa maps it to the DataCite Metadata Schema 4 and registers DOIs through DataCite's REST API.
+
+- **Curate:** each thesis page links to `/thesis/:id/curate`, which edits the record, shows what is missing, and previews the exact DataCite record. `/curation` tracks completeness across the archive against the roadmap's 95% target.
+- **DOI workflow:** *reserve* creates a draft DOI. Drafts can be edited or discarded and do not resolve. *Register* makes the DOI findable, which is permanent and needs explicit confirmation. A DOI can be reserved only when every required field is complete. After that, saved edits are sent to DataCite automatically.
+- **Bulk import:** `sankofa metadata import file.csv [--dry-run]` reads the roadmap's template (see [`docs/metadata-template.csv`](docs/metadata-template.csv); multiple values are joined with `||`). Bad rows are reported and skipped. `sankofa metadata report` prints completeness, worst records first.
+- **Command line:** `sankofa doi reserve <id>`, `sankofa doi register <id>` and `sankofa doi discard <id>`.
+- **Configuration:** set `LA_CURATOR_TOKEN` to enable edits, and `LA_PUBLIC_URL` so each DOI points to its thesis page. Set the `LA_DATACITE_*` variables to AIMS's DataCite repository account and prefix. The default API is DataCite's **test** system, so production needs `LA_DATACITE_API_URL=https://api.datacite.org`. Metadata edits and DOI actions are recorded in the event log.
+
 ## Production hosting
+
+### DSpace-backed deployment
+
+Sankofa's authoritative repository integration, single sign-in, deposits, workflow review, licences, embargoes, durable bitstreams and AI access propagation are documented in [`docs/dspace-integration.md`](docs/dspace-integration.md). With DSpace configured in `.env`, the bundled website/API and derivative services can be built and started with `make deploy` (or `docker compose -f deploy/compose.yml up -d --build`). DSpace itself remains an AIMS-managed service and must be deployed, patched, backed up and secured using the official DSpace release and operations guidance.
 
 For GitHub Pages, see [deployment instructions](docs/github-pages.md). The Pages workflow publishes the UI with repository-relative assets and hash navigation. A separate backend is required for archive data and live features.
 

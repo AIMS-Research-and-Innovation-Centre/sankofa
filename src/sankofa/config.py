@@ -23,6 +23,25 @@ class Settings(BaseSettings):
     public_url: str = Field(default="")
     # Extra Host headers the /mcp endpoint accepts (e.g. ["archive.aims.ac.za"]).
     mcp_allowed_hosts: list[str] = Field(default_factory=list)
+    # Thesis landing page; {base} is public_url. Hash routing matches the GitHub Pages build.
+    record_url_template: str = Field(default="{base}/#/thesis/{id}")
+    # Bearer token for curator actions (metadata edits, DOIs). Unset disables them.
+    curator_token: str | None = None
+    # DataCite. Defaults to the test system; production is https://api.datacite.org.
+    datacite_api_url: str = Field(default="https://api.test.datacite.org")
+    datacite_repository_id: str | None = None
+    datacite_password: str | None = None
+    datacite_prefix: str | None = None
+    # ROR IDs for Centre affiliations, e.g. {"rwanda": "https://ror.org/..."}.
+    centre_ror: dict[str, str] = Field(default_factory=dict)
+    # DSpace 10.1 REST API (the authoritative repository of record).
+    dspace_url: str = Field(default="")
+    dspace_timeout: float = Field(default=30.0, gt=0, le=300)
+    session_secret: str = Field(default="change-me-in-production", min_length=8)
+    session_cookie_secure: bool = False
+    dspace_public_group: str = "anonymous"
+    dspace_librarian_group: str = "AIMS Librarians"
+    dspace_editor_group: str = "AIMS Network Editors"
 
 
 @lru_cache
