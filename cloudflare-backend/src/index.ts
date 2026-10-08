@@ -1,7 +1,7 @@
 import { Container } from '@cloudflare/containers';
 
 export class SankofaApi extends Container {
-  defaultPort = 8001;
+  defaultPort = 8080;
   sleepAfter = '10m';
   envVars = {
     LA_REPOSITORY_DB_PATH: '/app/data/repository.sqlite3',

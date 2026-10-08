@@ -14,5 +14,5 @@ RUN pip install --no-cache-dir . --no-deps && \
       "structlog>=24.4" "orjson>=3.10" "numpy>=2.0" "typer>=0.12" \
       "prompt_toolkit>=3.0.47" "rich>=13.9"
 WORKDIR /app
-EXPOSE 8001
-CMD ["uvicorn", "sankofa.api.app:app", "--host", "0.0.0.0", "--port", "8001"]
+EXPOSE 8080
+CMD ["uvicorn", "sankofa.api.app:app", "--host", "0.0.0.0", "--port", "8080"]
