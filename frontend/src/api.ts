@@ -23,7 +23,7 @@ export interface Neighbor { id?: string; label: string; labels: string[] }
 export interface Proposal { title: string; concepts: string[]; novelty: number; feasible: number; rationale: string }
 export interface Dream { id: string; emitted_at: string; text: string; path: { from: string; rel: string; to: string }[] }
 export interface NotebookAnswer { answer: string; mode: 'model' | 'extractive' | 'none' | 'local'; sources: { n: number; id: string; title: string }[] }
-export interface AuthUser { user: Record<string, unknown>; role: 'researcher' | 'librarian' | 'editor'; }
+export interface AuthUser { user: Record<string, unknown>; role: 'researcher' | 'librarian' | 'editor' | 'admin'; }
 
 const base = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 export const archiveConnected = import.meta.env.VITE_PAGES !== 'true' || !!import.meta.env.VITE_API_BASE;
@@ -49,6 +49,10 @@ export async function request<T>(path: string, body?: unknown, signal?: AbortSig
 
 export async function login(email: string, password: string): Promise<AuthUser> {
   return request<AuthUser>('/auth/login', { email, password });
+}
+
+export async function signup(email: string, password: string, name: string): Promise<{ status: string }> {
+  return request<{ status: string }>('/auth/signup', { email, password, name });
 }
 
 export async function currentUser(): Promise<AuthUser | null> {

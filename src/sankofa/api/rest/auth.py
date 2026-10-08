@@ -1,4 +1,4 @@
-"""Sankofa's single sign-in, delegated to DSpace authentication."""
+"""Sankofa-owned authentication; no external repository account is required."""
 from __future__ import annotations
 
 import base64
@@ -12,10 +12,16 @@ from fastapi import APIRouter, Cookie, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from ...config import settings
-from ...dspace import DSpaceClient, DSpaceError
+from ...repository import RepositoryStore
 
 router = APIRouter()
 COOKIE = "sankofa_session"
+
+
+class AccountRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=10, max_length=300)
+    name: str = Field(min_length=2, max_length=200)
 
 
 class LoginRequest(BaseModel):
@@ -23,8 +29,12 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=300)
 
 
-def _encode(token: str) -> str:
-    payload = base64.urlsafe_b64encode(json.dumps({"token": token, "exp": int(time.time()) + 8 * 3600}).encode()).decode().rstrip("=")
+class ResetRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+
+
+def _encode(user_id: str) -> str:
+    payload = base64.urlsafe_b64encode(json.dumps({"uid": user_id, "exp": int(time.time()) + 8 * 3600}).encode()).decode().rstrip("=")
     signature = hmac.new(settings().session_secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
     return f"{payload}.{signature}"
 
@@ -37,73 +47,79 @@ def _decode(value: str | None) -> str | None:
     if not hmac.compare_digest(signature, expected):
         return None
     try:
-        padded = payload + "=" * (-len(payload) % 4)
-        body = json.loads(base64.urlsafe_b64decode(padded))
-        if int(body.get("exp", 0)) < int(time.time()):
-            return None
-        return str(body["token"])
+        body = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        return str(body["uid"]) if int(body["exp"]) >= int(time.time()) else None
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return None
 
 
-def session_token(cookie: str | None) -> str | None:
-    return _decode(cookie)
+def user_from_cookie(cookie: str | None) -> dict[str, Any] | None:
+    uid = _decode(cookie)
+    if not uid:
+        return None
+    try:
+        return RepositoryStore().user(uid)
+    except KeyError:
+        return None
 
 
-def require_token(cookie: str | None) -> str:
-    token = _decode(cookie)
-    if not token:
-        raise HTTPException(401, "Sign in with your AIMS repository account.")
-    return token
+def require_user(cookie: str | None, roles: set[str] | None = None) -> dict[str, Any]:
+    user = user_from_cookie(cookie)
+    if not user:
+        raise HTTPException(401, "Sign in with your Sankofa account.")
+    if not user["approved"]:
+        raise HTTPException(403, "Your Sankofa account is awaiting AIMS approval.")
+    if roles and user["role"] not in roles:
+        raise HTTPException(403, "This Sankofa action requires an approved staff account.")
+    return user
 
 
-def _groups(user: dict[str, Any]) -> set[str]:
-    values = user.get("groups") or user.get("groupNames") or user.get("eperson", {}).get("groups", [])
-    names: set[str] = set()
-    for value in values if isinstance(values, list) else []:
-        names.add(value if isinstance(value, str) else str(value.get("name", "")))
-    return {name for name in names if name}
-
-
-def role(user: dict[str, Any]) -> str:
-    groups = _groups(user)
-    if settings().dspace_editor_group in groups:
-        return "editor"
-    if settings().dspace_librarian_group in groups:
-        return "librarian"
-    return "researcher"
+@router.post("/signup", status_code=201)
+def signup(body: AccountRequest) -> dict[str, Any]:
+    try:
+        user = RepositoryStore().create_user(body.email, body.password, body.name)
+    except Exception as exc:
+        if "UNIQUE" in str(exc).upper():
+            raise HTTPException(409, "An account with this email already exists.") from exc
+        raise
+    return {"user": user, "status": "awaiting_approval"}
 
 
 @router.post("/login")
 def login(body: LoginRequest, response: Response) -> dict[str, Any]:
-    try:
-        with DSpaceClient() as dspace:
-            session = dspace.login(body.email, body.password)
-    except DSpaceError as exc:
-        raise HTTPException(exc.status_code or 502, str(exc)) from exc
-    response.set_cookie(COOKIE, _encode(session.token), httponly=True,
-                        secure=settings().session_cookie_secure, samesite="lax", max_age=8 * 3600)
-    return {"user": session.user, "role": role(session.user)}
+    user = RepositoryStore().authenticate(body.email, body.password)
+    if not user:
+        raise HTTPException(401, "Email, password or approval status is incorrect.")
+    response.set_cookie(COOKIE, _encode(user["id"]), httponly=True, secure=settings().session_cookie_secure, samesite="lax", max_age=8 * 3600)
+    return {"user": user, "role": user["role"]}
 
 
 @router.get("/me")
 def me(sankofa_session: str | None = Cookie(default=None)) -> dict[str, Any]:
-    token = require_token(sankofa_session)
-    try:
-        with DSpaceClient(token) as dspace:
-            user = dspace.status()
-    except DSpaceError as exc:
-        raise HTTPException(exc.status_code or 502, str(exc)) from exc
-    return {"user": user, "role": role(user)}
+    user = require_user(sankofa_session)
+    return {"user": user, "role": user["role"]}
 
 
 @router.post("/logout", status_code=204)
-def logout(response: Response, sankofa_session: str | None = Cookie(default=None)) -> None:
-    token = session_token(sankofa_session)
-    if token:
-        try:
-            with DSpaceClient(token) as dspace:
-                dspace.logout()
-        except DSpaceError:
-            pass
+def logout(response: Response) -> None:
     response.delete_cookie(COOKIE)
+
+
+@router.post("/password-reset")
+def password_reset(body: ResetRequest) -> dict[str, str]:
+    token = RepositoryStore().reset_token(body.email)
+    result = {"status": "If the account exists, a reset link will be sent."}
+    if not settings().session_cookie_secure and token:
+        result["development_token"] = token
+    return result
+
+
+@router.post("/users/{user_id}/approve")
+def approve(user_id: str, role: str = "researcher", sankofa_session: str | None = Cookie(default=None)) -> dict[str, Any]:
+    require_user(sankofa_session, {"admin"})
+    if role not in {"researcher", "librarian", "editor", "admin"}:
+        raise HTTPException(400, "Unsupported Sankofa role.")
+    try:
+        return RepositoryStore().approve(user_id, role)
+    except KeyError as exc:
+        raise HTTPException(404, "User not found.") from exc

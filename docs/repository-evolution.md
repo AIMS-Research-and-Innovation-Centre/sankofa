@@ -10,7 +10,7 @@ GitHub Pages had published the root README through its branch-based publisher. T
 
 The target is a network scholarly repository, covering theses, articles, presentations, datasets, code and reports. Sankofa currently provides a thesis discovery interface, PDF ingestion into a knowledge graph and vector index, and exploratory AI features. Those are useful extensions, but do not yet supply the governed repository of record described in the roadmap.
 
-The roadmap selects DSpace with its Angular frontend and REST backend, PostgreSQL, Solr and an assetstore. It also calls for an inception-stage platform comparison. Sankofa currently uses React, FastAPI, Neo4j and Qdrant. Choose and record the authoritative platform before extending either stack. The recommendation is to use a standards-based repository as the system of record, and retain Sankofa as an optional discovery and research layer consuming approved public records. If AIMS chooses a fully custom repository instead, document the deviation, operational cost and equivalent acceptance evidence for owner approval.
+The roadmap evaluated DSpace as one possible repository platform. AIMS has chosen the fully custom Sankofa repository for this implementation: React, FastAPI, a Sankofa-owned catalogue, durable bitstream storage, Neo4j and Qdrant. The deviation and operating boundary are documented in `docs/repository-operations.md`; DSpace is not a runtime or account dependency.
 
 ## Capability assessment
 
@@ -39,7 +39,7 @@ A durable implementation should allocate a stable item UUID, store an immutable 
 ## Decisions to resolve in the governing document
 
 1. Clarify the Centre list. The document requires six Centres but names five examples and leaves the remainder unconfirmed. Treat AIMS RIC as an explicitly approved organisational unit for the pilot rather than silently adding or merging it.
-2. Reconcile platform selection at inception with the prescriptive DSpace installation requirement. Choose a compatible supported release from its official release matrix at implementation time; the document's release and runtime numbers are planning assumptions.
+2. Validate the custom repository against the roadmap's acceptance evidence: durable storage, restore, metadata, workflow, access control, harvesting, statistics and AI withdrawal propagation.
 3. Resolve joint ownership and acceptance versus reporting that consults the Librarian only occasionally. Metadata, access rules, reporting and migration acceptance require continuous library participation.
 4. Permit honestly absent legacy metadata. A translated title, bilingual abstract or supervisor ORCID cannot be invented to satisfy a required-field rule. Distinguish mandatory deposit fields from legacy completeness targets and record exceptions.
 5. Define whether a Handle, DOI, or both are required per work type. DOI registration requires a provider agreement, credentials, funding and policies; assigning an internal ID is not minting a DOI.

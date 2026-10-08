@@ -8,9 +8,7 @@ from pydantic import BaseModel
 from ...graph.client import graph
 from ...graph.embeddings.hybrid_search import hybrid_search
 from ...ingestion.pipeline import ingest
-from ...config import settings
-from ...dspace import DSpaceClient, DSpaceError
-from .auth import session_token
+from ...repository import RepositoryStore
 
 router = APIRouter()
 
@@ -20,41 +18,11 @@ class SearchQuery(BaseModel):
     limit: int = 10
 
 
-def _dspace_item(item: dict, streams: list[dict] | None = None) -> dict:
-    metadata = item.get("metadata", {}) if isinstance(item.get("metadata"), dict) else {}
-    def value(key: str, default: str = "") -> str:
-        values = metadata.get(key, [])
-        return str(values[0].get("value", default)) if values and isinstance(values[0], dict) else default
-    pdf = next((stream for stream in streams or [] if str(stream.get("name", "")).lower().endswith(".pdf")), None)
-    content_link = (pdf or {}).get("_links", {}).get("content", {}) if pdf else {}
-    return {
-        "id": item.get("uuid"), "title": value("dc.title", item.get("name", "")),
-        "author": value("dc.contributor.author"), "abstract": value("dc.description.abstract"),
-        "year": value("dc.date.issued")[:4] or None, "campus": value("aims.centre"),
-        "concepts": [str(v.get("value")) for v in metadata.get("dc.subject", []) if isinstance(v, dict)],
-        "access": value("dc.rights.accessRights", "open"), "withdrawn": item.get("withdrawn", False),
-        "in_archive": item.get("inArchive", False), "bitstreams": streams or [],
-        "pdf_url": content_link.get("href") if isinstance(content_link, dict) else None,
-    }
-
-
-def _dspace_search(body: dict) -> list[dict]:
-    embedded = body.get("_embedded", {})
-    results = embedded.get("searchResult", []) if isinstance(embedded, dict) else []
-    objects: list[dict] = []
-    for result in results if isinstance(results, list) else []:
-        objects.extend(result.get("_embedded", {}).get("objects", []) if isinstance(result, dict) else [])
-    return [{"thesis_id": obj.get("uuid") or obj.get("id"), "score": obj.get("score", 0)} for obj in objects]
-
-
 @router.get("/")
 def list_theses(limit: int = 200, sankofa_session: str | None = Cookie(default=None)) -> list[dict]:
-    if settings().dspace_url:
-        try:
-            with DSpaceClient(session_token(sankofa_session)) as dspace:
-                return _dspace_search(dspace.search("*", size=min(limit, 100), token=session_token(sankofa_session)))
-        except DSpaceError as exc:
-            raise HTTPException(exc.status_code or 502, str(exc)) from exc
+    records = RepositoryStore().list_published(min(limit, 500))
+    if records:
+        return [{"id": r["id"], "title": r["metadata"].get("title", r["id"]), "abstract": r["metadata"].get("abstract", ""), "year": r["metadata"].get("year"), "author": "; ".join(r["metadata"].get("authors", [])), "concepts": r["metadata"].get("keywords", [])} for r in records]
     return graph().run(
         """MATCH (t:Thesis)
         OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
@@ -70,14 +38,13 @@ def list_theses(limit: int = 200, sankofa_session: str | None = Cookie(default=N
 
 @router.get("/{thesis_id}")
 def get_thesis(thesis_id: str, sankofa_session: str | None = Cookie(default=None)) -> dict:
-    if settings().dspace_url:
-        try:
-            token = session_token(sankofa_session)
-            with DSpaceClient(token) as dspace:
-                item = dspace.item(thesis_id, token=token)
-                return {"thesis": _dspace_item(item, dspace.bitstreams(item, token=token)), "concepts": []}
-        except DSpaceError as exc:
-            raise HTTPException(exc.status_code or 502, str(exc)) from exc
+    try:
+        record = RepositoryStore().item(thesis_id)
+        if record["status"] == "published" and not record["withdrawn"]:
+            metadata = record["metadata"]
+            return {"thesis": {"id": thesis_id, "title": metadata.get("title", thesis_id), "abstract": metadata.get("abstract", ""), "author": "; ".join(metadata.get("authors", [])), "access": record["access"], "licence": record["licence"], "bitstreams": record["bitstreams"]}, "concepts": metadata.get("keywords", [])}
+    except KeyError:
+        pass
     rows = graph().run(
         """MATCH (t:Thesis {id: $id})
         OPTIONAL MATCH (s:Student)-[:AUTHORED]->(t)
@@ -112,13 +79,15 @@ def neighbors(thesis_id: str, hops: int = 2) -> list[dict]:
 
 @router.post("/search")
 def search(q: SearchQuery, sankofa_session: str | None = Cookie(default=None)) -> list[dict]:
-    if settings().dspace_url:
-        try:
-            token = session_token(sankofa_session)
-            with DSpaceClient(token) as dspace:
-                return _dspace_search(dspace.search(q.query, size=min(q.limit, 100), token=token))
-        except DSpaceError as exc:
-            raise HTTPException(exc.status_code or 502, str(exc)) from exc
+    needle = q.query.casefold().strip()
+    repository_rows = RepositoryStore().list_published(min(q.limit, 500))
+    if repository_rows:
+        matches = []
+        for record in repository_rows:
+            text = json.dumps(record["metadata"], ensure_ascii=False).casefold()
+            if not needle or needle in text:
+                matches.append({"thesis_id": record["id"], "score": 1.0})
+        return matches[:q.limit]
     return hybrid_search(q.query, limit=q.limit)
 
 

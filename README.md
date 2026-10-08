@@ -4,7 +4,7 @@ A thesis archive for the African Institute for Mathematical Sciences. Find, read
 
 ## Web interface
 
-The interface follows the AIMS Scholarly Repository roadmap: one archive for the whole network, a community per Centre, and browse labels taken from DSpace@MIT.
+The interface follows the AIMS Scholarly Repository roadmap: one archive for the whole network, a community per Centre, and consistent scholarly browse labels.
 
 - **Discover:** search across all Centres, filter by Centre, year and concept, and add results to the notebook.
 - **Centres:** all six Centres in the controlled list (AIMS South Africa, Senegal, Ghana, Cameroon, Rwanda and the AIMS Research and Innovation Centre), each with its own page. Programme communities C2 to C5 are listed alongside them. Free-text campus values such as `ghana` or `Cape Town` are mapped onto the list (`src/sankofa/centres.py`, mirrored in `frontend/src/centres.ts`).
@@ -104,9 +104,9 @@ Each thesis carries the roadmap's metadata schema (Section 5): authors and super
 
 ## Production hosting
 
-### DSpace-backed deployment
+### Self-contained repository deployment
 
-Sankofa's authoritative repository integration, single sign-in, deposits, workflow review, licences, embargoes, durable bitstreams and AI access propagation are documented in [`docs/dspace-integration.md`](docs/dspace-integration.md). With DSpace configured in `.env`, the bundled website/API and derivative services can be built and started with `make deploy` (or `docker compose -f deploy/compose.yml up -d --build`). DSpace itself remains an AIMS-managed service and must be deployed, patched, backed up and secured using the official DSpace release and operations guidance.
+Sankofa owns its repository catalogue, accounts, deposits, workflow, durable files and AI access policy. Users do not need DSpace accounts or any external repository account. See [`docs/repository-operations.md`](docs/repository-operations.md). With `.env` configured, the bundled stack starts with `make deploy` (or `docker compose -f deploy/compose.yml up -d --build`).
 
 For GitHub Pages, see [deployment instructions](docs/github-pages.md). The Pages workflow publishes the UI with repository-relative assets and hash navigation. A separate backend is required for archive data and live features.
 

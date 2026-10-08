@@ -34,14 +34,14 @@ class Settings(BaseSettings):
     datacite_prefix: str | None = None
     # ROR IDs for Centre affiliations, e.g. {"rwanda": "https://ror.org/..."}.
     centre_ror: dict[str, str] = Field(default_factory=dict)
-    # DSpace 10.1 REST API (the authoritative repository of record).
-    dspace_url: str = Field(default="")
-    dspace_timeout: float = Field(default=30.0, gt=0, le=300)
+    # Sankofa-owned repository catalogue and durable bitstream storage.
+    repository_db_path: str = Field(default="./data/repository.sqlite3")
+    repository_storage_path: str = Field(default="./data/repository-files")
+    bootstrap_admin_email: str | None = None
+    bootstrap_admin_password: str | None = None
+    bootstrap_admin_name: str = "AIMS Administrator"
     session_secret: str = Field(default="change-me-in-production", min_length=8)
     session_cookie_secure: bool = False
-    dspace_public_group: str = "anonymous"
-    dspace_librarian_group: str = "AIMS Librarians"
-    dspace_editor_group: str = "AIMS Network Editors"
 
 
 @lru_cache

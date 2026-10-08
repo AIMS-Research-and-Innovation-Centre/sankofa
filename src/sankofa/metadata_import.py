@@ -2,7 +2,7 @@
 
 Columns: id (optional), title, title_fr, author, advisor, date_issued, abstract,
 abstract_fr, subject, msc, type, language, doi, licence, centre, programme,
-cohort. Multi-valued cells use the DSpace separator "||". Rows are validated
+cohort. Multi-valued cells use the documented "||" separator. Rows are validated
 one by one; a bad row is reported and skipped, never half-imported.
 """
 from __future__ import annotations
