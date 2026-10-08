@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 export default defineConfig({
   base: process.env.VITE_PAGES === 'true' ? '/sankofa/' : '/',
-  plugins: [react()],
+  plugins: [react(), cloudflare()],
   server: {
     port: 5173,
     proxy: {
